@@ -10,12 +10,17 @@ export default function Landing() {
             <span className="text-xl">📡</span>
             <span className="font-bold text-lg">PromoRadar</span>
           </div>
-          <Link
-            href="/tool"
-            className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors"
-          >
-            Try it free →
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">
+              Sign in
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors"
+            >
+              Get started →
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -33,13 +38,21 @@ export default function Landing() {
             PromoRadar scans Reddit for questions your tool can answer, scores each post
             by relevance, and writes replies you can post in seconds — without being spammy.
           </p>
-          <Link
-            href="/tool"
-            className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-2xl transition-colors shadow-lg hover:shadow-xl"
-          >
-            Start finding opportunities →
-          </Link>
-          <p className="text-sm text-gray-400 mt-3">No account needed · Free to use</p>
+          <div className="flex items-center justify-center gap-4">
+            <Link
+              href="/auth/signup"
+              className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-2xl transition-colors shadow-lg hover:shadow-xl"
+            >
+              Get started free →
+            </Link>
+            <Link
+              href="/auth/login"
+              className="inline-block text-gray-600 hover:text-gray-900 font-semibold text-lg px-6 py-4 transition-colors"
+            >
+              Sign in
+            </Link>
+          </div>
+          <p className="text-sm text-gray-400 mt-3">Free to use · No credit card</p>
         </div>
 
         {/* Mock result card */}
@@ -188,12 +201,12 @@ export default function Landing() {
           is the perfect answer — ready in under 20 seconds.
         </p>
         <Link
-          href="/tool"
+          href="/auth/signup"
           className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-10 py-4 rounded-2xl transition-colors shadow-lg hover:shadow-xl"
         >
-          Try PromoRadar free →
+          Create free account →
         </Link>
-        <p className="text-sm text-gray-400 mt-3">No account · No credit card</p>
+        <p className="text-sm text-gray-400 mt-3">No credit card required</p>
       </section>
 
       {/* Footer */}

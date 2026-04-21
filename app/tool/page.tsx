@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface AnalyzedPost {
   id: string;
@@ -18,7 +20,20 @@ interface AnalyzedPost {
 type Step = "form" | "loading" | "results";
 
 export default function Home() {
+  const router = useRouter();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [step, setStep] = useState<Step>("form");
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
+  }, []);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+  };
   const [toolName, setToolName] = useState("");
   const [toolDescription, setToolDescription] = useState("");
   const [keywords, setKeywords] = useState("");
@@ -93,14 +108,27 @@ export default function Home() {
               <p className="text-xs text-orange-500 font-medium">Reddit opportunities for your tool</p>
             </div>
           </button>
-          {step === "results" && (
-            <button
-              onClick={reset}
-              className="text-sm text-gray-500 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              ← New search
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {step === "results" && (
+              <button
+                onClick={reset}
+                className="text-sm text-gray-500 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                ← New search
+              </button>
+            )}
+            {userEmail && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 hidden sm:block">{userEmail}</span>
+                <button
+                  onClick={handleSignOut}
+                  className="text-xs text-gray-500 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
