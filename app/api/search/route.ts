@@ -21,17 +21,29 @@ export interface AnalyzedPost extends RedditPost {
 }
 
 async function searchReddit(keyword: string): Promise<RedditPost[]> {
-  try {
-    const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(keyword)}&sort=new&t=month&limit=20`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "PromoRadar/1.0" },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.data?.children?.map((child: { data: RedditPost }) => child.data) ?? [];
-  } catch {
-    return [];
+  const urls = [
+    `https://www.reddit.com/search.json?q=${encodeURIComponent(keyword)}&sort=relevance&t=month&limit=20`,
+    `https://api.reddit.com/search?q=${encodeURIComponent(keyword)}&sort=relevance&t=month&limit=20`,
+  ];
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; PromoRadar/1.0; +https://reachdit.com)",
+          "Accept": "application/json",
+        },
+        cache: "no-store",
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const posts = data.data?.children?.map((child: { data: RedditPost }) => child.data) ?? [];
+      if (posts.length > 0) return posts;
+    } catch {
+      continue;
+    }
   }
+  return [];
 }
 
 export async function POST(req: Request) {
