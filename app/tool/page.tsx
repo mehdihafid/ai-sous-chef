@@ -43,15 +43,40 @@ export default function Home() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
+  const fetchRedditPosts = async (keywords: string) => {
+    const keywordList = keywords.split(",").map((k) => k.trim()).filter(Boolean).slice(0, 4);
+    const allPosts: object[] = [];
+    const seenIds = new Set<string>();
+    for (const keyword of keywordList) {
+      try {
+        const res = await fetch(
+          `https://www.reddit.com/search.json?q=${encodeURIComponent(keyword)}&sort=relevance&t=month&limit=20`,
+          { headers: { "Accept": "application/json" } }
+        );
+        if (!res.ok) continue;
+        const data = await res.json();
+        const posts = data.data?.children?.map((c: { data: object & { id: string } }) => c.data) ?? [];
+        for (const post of posts) {
+          if (!seenIds.has(post.id)) {
+            seenIds.add(post.id);
+            allPosts.push(post);
+          }
+        }
+      } catch { continue; }
+    }
+    return allPosts;
+  };
+
   const handleSearch = async () => {
     if (!toolName || !toolDescription || !keywords) return;
     setError(null);
     setStep("loading");
     try {
+      const posts = await fetchRedditPosts(keywords);
       const res = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toolName, toolDescription, keywords }),
+        body: JSON.stringify({ toolName, toolDescription, keywords, posts }),
       });
       if (!res.ok) throw new Error("Search failed");
       const data = await res.json();

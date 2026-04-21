@@ -21,54 +21,52 @@ export interface AnalyzedPost extends RedditPost {
 }
 
 async function searchReddit(keyword: string): Promise<RedditPost[]> {
-  const urls = [
-    `https://www.reddit.com/search.json?q=${encodeURIComponent(keyword)}&sort=relevance&t=month&limit=20`,
-    `https://api.reddit.com/search?q=${encodeURIComponent(keyword)}&sort=relevance&t=month&limit=20`,
-  ];
-
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; PromoRadar/1.0; +https://reachdit.com)",
-          "Accept": "application/json",
-        },
-        cache: "no-store",
-      });
-      if (!res.ok) continue;
-      const data = await res.json();
-      const posts = data.data?.children?.map((child: { data: RedditPost }) => child.data) ?? [];
-      if (posts.length > 0) return posts;
-    } catch {
-      continue;
-    }
+  try {
+    const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(keyword)}&sort=relevance&t=month&limit=20`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; PromoRadar/1.0; +https://reachdit.com)",
+        "Accept": "application/json",
+      },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.data?.children?.map((child: { data: RedditPost }) => child.data) ?? [];
+  } catch {
+    return [];
   }
-  return [];
 }
 
 export async function POST(req: Request) {
   try {
-    const { toolName, toolDescription, keywords } = await req.json();
+    const { toolName, toolDescription, keywords, posts: clientPosts } = await req.json();
 
     if (!toolName || !toolDescription || !keywords) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const keywordList = (keywords as string)
-      .split(",")
-      .map((k) => k.trim())
-      .filter(Boolean)
-      .slice(0, 4);
+    let allPosts: RedditPost[] = [];
 
-    const allPosts: RedditPost[] = [];
-    const seenIds = new Set<string>();
+    if (clientPosts && clientPosts.length > 0) {
+      // Posts fetched client-side (bypasses Vercel IP block)
+      allPosts = clientPosts;
+    } else {
+      // Fallback: try server-side fetch
+      const keywordList = (keywords as string)
+        .split(",")
+        .map((k: string) => k.trim())
+        .filter(Boolean)
+        .slice(0, 4);
 
-    for (const keyword of keywordList) {
-      const posts = await searchReddit(keyword);
-      for (const post of posts) {
-        if (!seenIds.has(post.id)) {
-          seenIds.add(post.id);
-          allPosts.push(post);
+      const seenIds = new Set<string>();
+      for (const keyword of keywordList) {
+        const posts = await searchReddit(keyword);
+        for (const post of posts) {
+          if (!seenIds.has(post.id)) {
+            seenIds.add(post.id);
+            allPosts.push(post);
+          }
         }
       }
     }
