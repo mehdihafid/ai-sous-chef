@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Sous Chef",
-  description: "Snap your fridge, get a recipe",
+  title: "PromoRadar",
+  description: "Find Reddit posts to promote your tool — AI-scored opportunities with drafted replies",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
