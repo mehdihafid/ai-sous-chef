@@ -1,314 +1,211 @@
-"use client";
+import Link from "next/link";
 
-import { useState } from "react";
-
-interface AnalyzedPost {
-  id: string;
-  title: string;
-  subreddit: string;
-  permalink: string;
-  score: number;
-  num_comments: number;
-  created_utc: number;
-  relevanceScore: number;
-  relevanceReason: string;
-  suggestedReply: string;
-}
-
-type Step = "form" | "loading" | "results";
-
-export default function Home() {
-  const [step, setStep] = useState<Step>("form");
-  const [toolName, setToolName] = useState("");
-  const [toolDescription, setToolDescription] = useState("");
-  const [keywords, setKeywords] = useState("");
-  const [results, setResults] = useState<AnalyzedPost[]>([]);
-  const [totalScanned, setTotalScanned] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
-
-  const handleSearch = async () => {
-    if (!toolName || !toolDescription || !keywords) return;
-    setError(null);
-    setStep("loading");
-    try {
-      const res = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toolName, toolDescription, keywords }),
-      });
-      if (!res.ok) throw new Error("Search failed");
-      const data = await res.json();
-      setResults(data.results ?? []);
-      setTotalScanned(data.total ?? 0);
-      setStep("results");
-    } catch {
-      setError("Something went wrong. Please try again.");
-      setStep("form");
-    }
-  };
-
-  const reset = () => {
-    setStep("form");
-    setResults([]);
-    setTotalScanned(0);
-    setError(null);
-    setExpandedId(null);
-  };
-
-  const copyReply = async (id: string, text: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopied(id);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  const timeAgo = (utc: number) => {
-    const diff = Date.now() / 1000 - utc;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
-  };
-
-  const scoreBadge = (score: number) => {
-    if (score >= 8) return "bg-green-100 text-green-700 border-green-200";
-    if (score >= 6) return "bg-emerald-100 text-emerald-700 border-emerald-200";
-    return "bg-yellow-100 text-yellow-700 border-yellow-200";
-  };
-
-  const scoreBar = (score: number) => {
-    if (score >= 8) return "border-l-green-400";
-    if (score >= 6) return "border-l-emerald-400";
-    return "border-l-yellow-400";
-  };
-
+export default function Landing() {
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button onClick={reset} className="flex items-center gap-2.5">
-            <span className="text-2xl">📡</span>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900 leading-tight">PromoRadar</h1>
-              <p className="text-xs text-orange-500 font-medium">Reddit opportunities for your tool</p>
-            </div>
-          </button>
-          {step === "results" && (
-            <button
-              onClick={reset}
-              className="text-sm text-gray-500 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              ← New search
-            </button>
-          )}
+    <main className="min-h-screen bg-white text-gray-900">
+      {/* Nav */}
+      <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-20">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📡</span>
+            <span className="font-bold text-lg">PromoRadar</span>
+          </div>
+          <Link
+            href="/tool"
+            className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors"
+          >
+            Try it free →
+          </Link>
         </div>
-      </header>
+      </nav>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* FORM */}
-        {step === "form" && (
-          <div>
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Find Reddit posts to promote your tool
-              </h2>
-              <p className="text-gray-500 max-w-xl mx-auto">
-                Enter your tool and keywords — we scan Reddit for relevant questions and draft
-                natural replies that mention your tool
+      {/* Hero */}
+      <section className="max-w-5xl mx-auto px-6 pt-20 pb-16">
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
+            🤖 Powered by Claude AI
+          </div>
+          <h1 className="text-5xl font-extrabold text-gray-900 leading-tight mb-5">
+            Find Reddit threads where{" "}
+            <span className="text-orange-500">your tool belongs</span>
+          </h1>
+          <p className="text-xl text-gray-500 leading-relaxed mb-8">
+            PromoRadar scans Reddit for questions your tool can answer, scores each post
+            by relevance, and writes replies you can post in seconds — without being spammy.
+          </p>
+          <Link
+            href="/tool"
+            className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-2xl transition-colors shadow-lg hover:shadow-xl"
+          >
+            Start finding opportunities →
+          </Link>
+          <p className="text-sm text-gray-400 mt-3">No account needed · Free to use</p>
+        </div>
+
+        {/* Mock result card */}
+        <div className="max-w-2xl mx-auto">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 text-center">
+            Example output
+          </p>
+          <div className="bg-white rounded-2xl border border-gray-200 border-l-4 border-l-green-400 shadow-lg p-5">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                  r/SaaS
+                </span>
+                <span className="text-xs text-gray-400">3h ago</span>
+                <span className="text-xs text-gray-400">↑ 47</span>
+                <span className="text-xs text-gray-400">💬 12</span>
+              </div>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full border bg-green-100 text-green-700 border-green-200">
+                9/10
+              </span>
+            </div>
+            <p className="font-semibold text-gray-900 text-sm mb-2">
+              What&apos;s the best tool for building an email list as an indie hacker? ↗
+            </p>
+            <p className="text-xs text-gray-500 italic mb-3">
+              User is explicitly asking for email list tools — perfect fit for a direct recommendation.
+            </p>
+            <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                I&apos;ve been in this exact spot. For indie hackers, ConvertKit is hard to beat —
+                it&apos;s built specifically for creators, the free tier goes up to 1,000 subscribers,
+                and the automations are intuitive without being overwhelming. The tagging system is
+                great once your list grows. Beehiiv is worth a look too if you want a built-in
+                newsletter feed, but ConvertKit has a bigger ecosystem of integrations.
               </p>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-xs bg-orange-500 text-white px-4 py-1.5 rounded-full font-medium">
+                  Copy reply
+                </span>
+                <span className="text-xs text-gray-400">Ready to post</span>
+              </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
-                {error}
+      {/* Stats bar */}
+      <section className="border-y border-gray-100 bg-gray-50 py-8">
+        <div className="max-w-3xl mx-auto px-6 grid grid-cols-3 gap-6 text-center">
+          {[
+            { value: "25+", label: "Posts scanned per search" },
+            { value: "0–10", label: "AI relevance score per post" },
+            { value: "<20s", label: "Average scan time" },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <p className="text-3xl font-extrabold text-orange-500 mb-1">{stat.value}</p>
+              <p className="text-sm text-gray-500">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="max-w-5xl mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">How it works</h2>
+          <p className="text-gray-500">Three steps from setup to ready-to-post reply</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              step: "01",
+              icon: "🛠️",
+              title: "Describe your tool",
+              desc: "Enter your tool name, what it does, and the keywords people search when they need it.",
+            },
+            {
+              step: "02",
+              icon: "📡",
+              title: "We scan Reddit",
+              desc: "PromoRadar searches Reddit in real-time for recent posts matching your keywords — no stale data.",
+            },
+            {
+              step: "03",
+              icon: "🎯",
+              title: "Get scored opportunities",
+              desc: "Claude scores each post 0–10 for relevance and drafts a genuine, non-spammy reply you can copy.",
+            },
+          ].map((item) => (
+            <div
+              key={item.step}
+              className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl font-black text-orange-200">{item.step}</span>
+                <span className="text-2xl">{item.icon}</span>
               </div>
-            )}
+              <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Tool name
-                </label>
-                <input
-                  type="text"
-                  value={toolName}
-                  onChange={(e) => setToolName(e.target.value)}
-                  placeholder="e.g. ConvertKit"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  What does it do?
-                </label>
-                <textarea
-                  value={toolDescription}
-                  onChange={(e) => setToolDescription(e.target.value)}
-                  placeholder="e.g. Email marketing platform for creators — helps build and monetize a newsletter audience"
-                  rows={3}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Keywords{" "}
-                  <span className="text-gray-400 font-normal">(comma-separated, max 4)</span>
-                </label>
-                <input
-                  type="text"
-                  value={keywords}
-                  onChange={(e) => setKeywords(e.target.value)}
-                  placeholder="e.g. grow newsletter, email list tool, best email marketing"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
-                />
-                <p className="text-xs text-gray-400 mt-1.5">
-                  Use phrases people type when they have the problem your tool solves
-                </p>
-              </div>
-
-              <button
-                onClick={handleSearch}
-                disabled={!toolName || !toolDescription || !keywords}
-                className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-colors shadow-sm"
+      {/* Features */}
+      <section className="bg-gray-50 border-y border-gray-100 py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              Built for genuine promotion
+            </h2>
+            <p className="text-gray-500 max-w-xl mx-auto">
+              Reddit hates obvious spam. PromoRadar drafts replies that lead with real value so
+              you build trust while getting visibility.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[
+              { icon: "⚡", title: "Real-time Reddit data", desc: "Always fresh — no cached or outdated results" },
+              { icon: "🧠", title: "AI relevance scoring", desc: "Only see posts where your tool actually fits" },
+              { icon: "✍️", title: "Draft replies included", desc: "Claude writes a natural reply for every opportunity" },
+              { icon: "🚫", title: "Filters low-fit posts", desc: "Posts scoring below 4/10 are automatically hidden" },
+              { icon: "📋", title: "One-click copy", desc: "Copy the reply and post it directly on Reddit" },
+              { icon: "🔑", title: "No account needed", desc: "Just bring your Anthropic API key and go" },
+            ].map((feat) => (
+              <div
+                key={feat.title}
+                className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm"
               >
-                🔍 Scan Reddit
-              </button>
-            </div>
-
-            <div className="mt-6 grid grid-cols-3 gap-4">
-              {[
-                { icon: "🔎", title: "Scans Reddit", desc: "Finds recent posts matching your keywords" },
-                { icon: "🧠", title: "Scores relevance", desc: "Claude rates each post 0–10 for fit" },
-                { icon: "✍️", title: "Drafts replies", desc: "Natural replies that mention your tool" },
-              ].map((item) => (
-                <div
-                  key={item.title}
-                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center"
-                >
-                  <div className="text-2xl mb-1.5">{item.icon}</div>
-                  <p className="font-semibold text-gray-800 text-sm mb-0.5">{item.title}</p>
-                  <p className="text-xs text-gray-500">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* LOADING */}
-        {step === "loading" && (
-          <div className="text-center py-24">
-            <div className="text-5xl mb-5 animate-pulse">📡</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Scanning Reddit...</h2>
-            <p className="text-gray-500 mb-8">This takes about 15–20 seconds</p>
-            <div className="space-y-2.5 text-sm text-gray-400 max-w-xs mx-auto text-left">
-              <p className="flex items-center gap-2"><span>🔎</span> Searching across Reddit...</p>
-              <p className="flex items-center gap-2"><span>🧠</span> Claude is scoring relevance...</p>
-              <p className="flex items-center gap-2"><span>✍️</span> Drafting reply suggestions...</p>
-            </div>
-          </div>
-        )}
-
-        {/* RESULTS */}
-        {step === "results" && (
-          <div>
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  {results.length} {results.length === 1 ? "opportunity" : "opportunities"} found
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Scanned {totalScanned} posts · sorted by relevance score
-                </p>
+                <div className="text-2xl mb-2">{feat.icon}</div>
+                <h4 className="font-semibold text-gray-900 text-sm mb-1">{feat.title}</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">{feat.desc}</p>
               </div>
-            </div>
-
-            {results.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-                <div className="text-4xl mb-3">🔍</div>
-                <p className="font-semibold text-gray-700 mb-1">No relevant posts found</p>
-                <p className="text-sm text-gray-500">
-                  Try different keywords or a broader tool description
-                </p>
-                <button
-                  onClick={reset}
-                  className="mt-4 text-sm text-orange-500 hover:text-orange-700 font-medium"
-                >
-                  Try again
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {results.map((post) => (
-                  <div
-                    key={post.id}
-                    className={`bg-white rounded-2xl border border-gray-200 border-l-4 ${scoreBar(post.relevanceScore)} shadow-sm`}
-                  >
-                    <div className="p-5">
-                      <div className="flex items-start justify-between gap-3 mb-2.5">
-                        <div className="flex items-center gap-2 flex-wrap min-w-0">
-                          <span className="text-xs font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full whitespace-nowrap">
-                            r/{post.subreddit}
-                          </span>
-                          <span className="text-xs text-gray-400">{timeAgo(post.created_utc)}</span>
-                          <span className="text-xs text-gray-400">↑ {post.score}</span>
-                          <span className="text-xs text-gray-400">💬 {post.num_comments}</span>
-                        </div>
-                        <span
-                          className={`text-xs font-bold px-2.5 py-1 rounded-full border flex-shrink-0 ${scoreBadge(post.relevanceScore)}`}
-                        >
-                          {post.relevanceScore}/10
-                        </span>
-                      </div>
-
-                      <a
-                        href={`https://reddit.com${post.permalink}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-gray-900 hover:text-orange-600 transition-colors text-sm leading-snug block mb-2"
-                      >
-                        {post.title} ↗
-                      </a>
-
-                      <p className="text-xs text-gray-500 italic leading-relaxed">
-                        {post.relevanceReason}
-                      </p>
-
-                      {post.suggestedReply && post.suggestedReply !== "N/A" && (
-                        <div className="mt-3">
-                          <button
-                            onClick={() =>
-                              setExpandedId(expandedId === post.id ? null : post.id)
-                            }
-                            className="text-xs font-semibold text-orange-500 hover:text-orange-700 transition-colors"
-                          >
-                            {expandedId === post.id ? "▼ Hide reply" : "▶ View suggested reply"}
-                          </button>
-
-                          {expandedId === post.id && (
-                            <div className="mt-3 bg-orange-50 rounded-xl p-4 border border-orange-100">
-                              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                {post.suggestedReply}
-                              </p>
-                              <button
-                                onClick={() => copyReply(post.id, post.suggestedReply)}
-                                className="mt-3 text-xs bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-full transition-colors font-medium"
-                              >
-                                {copied === post.id ? "✓ Copied!" : "Copy reply"}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="max-w-5xl mx-auto px-6 py-20 text-center">
+        <h2 className="text-4xl font-extrabold text-gray-900 mb-4">
+          Start finding opportunities today
+        </h2>
+        <p className="text-gray-500 text-lg mb-8 max-w-lg mx-auto">
+          Paste your tool description, hit scan, and get a list of Reddit posts where your tool
+          is the perfect answer — ready in under 20 seconds.
+        </p>
+        <Link
+          href="/tool"
+          className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-10 py-4 rounded-2xl transition-colors shadow-lg hover:shadow-xl"
+        >
+          Try PromoRadar free →
+        </Link>
+        <p className="text-sm text-gray-400 mt-3">No account · No credit card</p>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-100 py-8">
+        <div className="max-w-5xl mx-auto px-6 flex items-center justify-between text-sm text-gray-400">
+          <div className="flex items-center gap-2">
+            <span>📡</span>
+            <span className="font-semibold text-gray-600">PromoRadar</span>
+          </div>
+          <p>Built with Next.js & Claude AI</p>
+        </div>
+      </footer>
     </main>
   );
 }
